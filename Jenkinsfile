@@ -27,13 +27,13 @@ pipeline {
 			parallel{
 				stage ('Deploy to Staging'){
 					steps {
-						sh "scp -i \"/home/kenneth/Documents/MyEC2KeyPair.pem\" **/target/*.war ec2-user@${params.tomcat_dev}:/etc/tomcat8/webapps"
+						sh "scp -i -o StrictHostKeyChecking=no /home/kenneth/Documents/MyEC2KeyPair.pem **/target/*.war ec2-user@${params.tomcat_dev}:/etc/tomcat8/webapps"
 					}
 				}
 
 				stage ("Deploy to Production"){
 					steps {
-						sh "scp -i \"/home/kenneth/Documents/MyEC2KeyPair.pem\" **/target/*.war ec2-user@${params.tomcat_prod}:/etc/tomcat8/webapps"
+						sh "scp -i -o StrictHostKeyChecking=no /home/kenneth/Documents/MyEC2KeyPair.pem **/target/*.war ec2-user@${params.tomcat_prod}:/etc/tomcat8/webapps"
 					}
 				}
 			}
