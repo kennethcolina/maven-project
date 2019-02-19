@@ -1,5 +1,15 @@
 pipeline {
 	agent any
+
+	parameters {
+		string(name: 'tomcat_dev', defaultValue: '172-31-6-234', description: 'Staging Server')
+		string(name: 'tomcat_prod', defaultValue: '172-31-12-208', description: 'Production Server')
+	}
+
+	triggers {
+		pollSCM('* * * * *')
+	 }
+
 	stages{
 		stage('Build'){
 			steps {
@@ -8,34 +18,25 @@ pipeline {
 			post {
 				success {
 					echo 'Now Archiving...'
-					archiveArtifacts artifacts: '**/*.war'
-				}
-			}
-		}
-		stage ('Deploy to Staging'){
-			steps {
-				build job: 'deploy-to-staging'
-			}
-		}
-
-		stage ('Deploy to Production'){
-			steps{
-				timeout(time:5, unit:'DAYS'){
-					input message:'Approve PRODUCTION Deployment?'
-				}
-
-				build job: 'deploy-to-Prod'
-			}
-			post {
-				success {
-					echo 'Code deployed to Production.'
-				}
-
-				failure {
-					echo ' Deployment failed.'
+					archiveArtifacts artifacts: '**/target/*.war'
 				}
 			}
 		}
 
+		stage ('Deployments'){
+			parallel{
+				stage ('Deploy to Staging'){
+					steps {
+						sh "scp -i /home/kenneth/Documents/MyEC2KeyPair.pem **/target/*.war ec2-user@${params.tomcat_dev}:/etc/tomcat8/webapps"
+					}
+				}
+
+				stage ("Deploy to Production"){
+					steps {
+						sh "scp -i /home/kenneth/Documents/MyEC2KeyPair.pem **/target/*.war ec2-user@${params.tomcat_prod}:/etc/tomcat8/webapps"
+					}
+				}
+			}
+		}
 	}
 }
